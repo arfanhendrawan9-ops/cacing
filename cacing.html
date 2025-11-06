@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Game Ular dengan Musuh Bergerak</title>
+  <style>
+    body {
+      background: #222;
+      color: yellow;
+      text-align: center;
+      font-family: sans-serif;
+    }
+
+    canvas {
+      border: 2px solid white;
+      background-color: #111;
+      margin-top: 20px;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 15px;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      width: 60px;
+      height: 60px;
+      font-size: 24px;
+      background: #444;
+      color: white;
+      border: none;
+      border-radius: 10px;
+    }
+
+    .btn:active {
+      background: #666;
+    }
+  </style>
+</head>
+<body>
+  <h1>Game Ular</h1>
+  <p>Gunakan tombol arah layar atau keyboard</p>
+  <canvas id="gameCanvas" width="400" height="400"></canvas>
+
+  <!-- Tombol kontrol -->
+  <div class="controls">
+    <div style="width: 60px;"></div>
+    <button class="btn" onclick="setDirection('UP')">↑</button>
+    <div style="width: 60px;"></div>
+
+    <button class="btn" onclick="setDirection('LEFT')">←</button>
+    <button class="btn" onclick="setDirection('DOWN')">↓</button>
+    <button class="btn" onclick="setDirection('RIGHT')">→</button>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    const box = 20;
+    const rows = canvas.height / box;
+    const cols = canvas.width / box;
+
+    let snake = [{ x: 9 * box, y: 9 * box }];
+    let food = randomPosition();
+    let enemy = randomPosition();
+
+    let direction = "RIGHT";
+    let enemyDirection = "LEFT";
+    let gameOver = false;
+
+    // Keyboard control
+    document.addEventListener("keydown", event => {
+      if (event.key === "ArrowUp" && direction !== "DOWN") direction = "UP";
+      else if (event.key === "ArrowDown" && direction !== "UP") direction = "DOWN";
+      else if (event.key === "ArrowLeft" && direction !== "RIGHT") direction = "LEFT";
+      else if (event.key === "ArrowRight" && direction !== "LEFT") direction = "RIGHT";
+    });
+
+    // Tombol layar
+    function setDirection(dir) {
+      if (dir === "UP" && direction !== "DOWN") direction = "UP";
+      else if (dir === "DOWN" && direction !== "UP") direction = "DOWN";
+      else if (dir === "LEFT" && direction !== "RIGHT") direction = "LEFT";
+      else if (dir === "RIGHT" && direction !== "LEFT") direction = "RIGHT";
+    }
+
+    function randomPosition() {
+      return {
+        x: Math.floor(Math.random() * cols) * box,
+        y: Math.floor(Math.random() * rows) * box
+      };
+    }
+
+    function moveEnemy() {
+      const dirs = ["UP", "DOWN", "LEFT", "RIGHT"];
+      enemyDirection = dirs[Math.floor(Math.random() * dirs.length)];
+
+      let newEnemy = { x: enemy.x, y: enemy.y };
+      if (enemyDirection === "UP") newEnemy.y -= box;
+      if (enemyDirection === "DOWN") newEnemy.y += box;
+      if (enemyDirection === "LEFT") newEnemy.x -= box;
+      if (enemyDirection === "RIGHT") newEnemy.x += box;
+
+      // Tetap di dalam area
+      if (
+        newEnemy.x >= 0 && newEnemy.x < canvas.width &&
+        newEnemy.y >= 0 && newEnemy.y < canvas.height
+      ) {
+        enemy = newEnemy;
+      }
+    }
+
+    setInterval(moveEnemy, 500); // Musuh gerak tiap 500ms
+
+    function draw() {
+      if (gameOver) return;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Gambar ular
+      for (let i = 0; i < snake.length; i++) {
+        ctx.fillStyle = i === 0 ? "#00f0ff" : "#00bfa6";
+        ctx.fillRect(snake[i].x, snake[i].y, box, box);
+      }
+
+      // Gambar makanan
+      ctx.fillStyle = "lime";
+      ctx.fillRect(food.x, food.y, box, box);
+
+      // Gambar musuh
+      ctx.fillStyle = "red";
+      ctx.fillRect(enemy.x, enemy.y, box, box);
+
+      // Gerak ular
+      let head = { x: snake[0].x, y: snake[0].y };
+      if (direction === "UP") head.y -= box;
+      if (direction === "DOWN") head.y += box;
+      if (direction === "LEFT") head.x -= box;
+      if (direction === "RIGHT") head.x += box;
+
+      // Tabrak dinding
+      if (
+        head.x < 0 || head.x >= canvas.width ||
+        head.y < 0 || head.y >= canvas.height
+      ) {
+        gameOver = true;
+        alert("Game Over! Ular menabrak dinding.");
+        return;
+      }
+
+      // Tabrak badan sendiri
+      for (let i = 1; i < snake.length; i++) {
+        if (head.x === snake[i].x && head.y === snake[i].y) {
+          gameOver = true;
+          alert("Game Over! Ular menabrak dirinya sendiri.");
+          return;
+        }
+      }
+
+      // Makan makanan
+      if (head.x === food.x && head.y === food.y) {
+        food = randomPosition();
+      } else {
+        snake.pop();
+      }
+
+      // Kena musuh
+      if (head.x === enemy.x && head.y === enemy.y) {
+        gameOver = true;
+        alert("Game Over! Ular kena musuh.");
+        return;
+      }
+
+      snake.unshift(head);
+    }
+
+    setInterval(draw, 100);
+  </script>
+</body>
+</html>
